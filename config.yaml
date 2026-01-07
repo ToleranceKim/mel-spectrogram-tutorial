@@ -1,0 +1,39 @@
+# 멜 스펙트로그램 실습 설정
+# 블로그 글의 파라미터와 1:1 대응
+
+audio:
+  sr: 22050
+  mono: true
+
+stft:
+  n_fft: 2048
+  hop_length: 512
+  win_length: null      # null이면 n_fft와 동일
+  window: "hann"
+  center: true
+  pad_mode: "constant"
+
+mel:
+  n_mels: 128
+  fmin: 0
+  fmax: null            # null이면 sr/2
+  htk: true             # HTK 스타일 (블로그 본문 기준)
+  norm: "slaney"
+
+db:
+  ref: "max"            # np.max 사용 → 상대 스케일, 최대가 0dB
+  amin: 1.0e-10
+  top_db: 80
+  power: 2.0            # 파워 스펙트럼 (진폭² 기준)
+
+figures:
+  output_dir: "outputs"
+  dpi: 150
+  background_color: "#F4F3EE"
+  figsize: [10, 4]
+
+# 파라미터 비교 실험용
+comparison:
+  n_fft_values: [512, 2048, 4096]
+  n_mels_values: [64, 128, 256]
+  hop_length_values: [256, 512, 1024]
