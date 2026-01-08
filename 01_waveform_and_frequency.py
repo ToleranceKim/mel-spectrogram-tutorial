@@ -291,7 +291,7 @@ def main():
     plt.close()
 
     # 청취용 WAV 저장 (2초)
-    sf.write('outputs/01_trumpet.wav', trumpet[:int(sr * 2)], sr)
+    sf.write('outputs/01_trumpet.wav', trumpet, sr)
 
     print(f"    트럼팻 샘플: {len(trumpet)} 샘플 ({len(trumpet)/sr:.1f}초)")
     print(f"    저장: outputs/01_trumpet_waveform.png")
