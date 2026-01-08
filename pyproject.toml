@@ -1,0 +1,20 @@
+[project]
+name = "mel-spectrogram-tutorial"
+version = "0.1.0"
+description = "멜 스펙트로그램 실습 튜토리얼"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = {text = "MIT"}
+
+dependencies = [
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "librosa>=0.10.0",
+    "pyyaml>=6.0",
+    "numba>=0.60.0,<0.62.0",  # macOS x86_64 wheel 호환성
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]

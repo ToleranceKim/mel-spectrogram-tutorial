@@ -16,7 +16,13 @@
 ```bash
 git clone https://github.com/YOUR_USERNAME/mel-spectrogram-tutorial.git
 cd mel-spectrogram-tutorial
-pip install -r requirements.txt
+
+# uv 설치 (없는 경우)
+curl -LsSF https://astral.sh/uv/install.sh | sh
+
+# 의존성 설치 및 실행
+uv sync
+source .venv/bin/activate
 
 # 순서대로 실습
 python 01_waveform_and_frequency.py
@@ -85,19 +91,19 @@ mel-spectrogram-tutorial/
 ├── 06_parameter_experiments.py     # 실습 6: 파라미터 실험
 ├── utils.py                        # 공통 유틸리티
 ├── config.yaml                     # 파라미터 설정
-├── requirements.txt                # 의존성
+├── pyproject.toml                  # 의존성
 ├── outputs/                        # 실행 결과
 └── assets/                         # 샘플 오디오 (선택)
 ```
 
 ## 의존성
 
-- Python 3.8+
+- Python >= 3.10
 - librosa >= 0.10.0
 - numpy >= 1.24.0
 - matplotlib >= 3.7.0
-- scipy >= 1.10.0
 - pyyaml >= 6.0
+
 
 ## 라이선스
 
