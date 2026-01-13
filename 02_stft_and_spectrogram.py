@@ -195,12 +195,86 @@ def experiment_resolution_tradeoff(
     """
     시간-주파수 해상도 트레이드오프 실험 (실습 3)
 
+    - 시간 해상도와 주파수 해상도는 동시에 높일 수 없음
+    - 오디오 분석에서는 n_fft 크기로 이 트레이드오프를 조절
+
+    n_fft
+    - 큰 n_fft (예: 4096):
+      * 주파수를 세밀하게 구분 (sr/n_fft = 22050/4096 = 5.4Hz 간격)
+      * 시간 변화에 둔감 (n_fft/sr = 186ms 구간을 하나로 분석)
+      * 저주파 분석, 음높이 검출에 적합
+    - 작은 n_fft (예: 512):
+      * 주파수 구분이 거침 (22050/512 = 43Hz 간격)
+      * 시간 변화에 민감 (23ms 단위로 분석)
+      * 타악기, 빠른 변화 분석에 적합
+
+    해상도 공식:
+    - 주파수 간격 = sr / n_fft (Hz)
+    - 시간 구간 = n_fft / sr (seconds)
+
     Args:
-        signal: 오디오 신호
-        sr: 샘플링 레이트
-        n_fft_values: 비교할 n_fft 값들
+        signal: 오디오 신호 (1D numpy array)
+        sr: 샘플링 레이트 (Hz)
+        n_fft_values: 비교할 n_fft 값들 리스트 (예: [512, 2048, 4096])
     """
-    pass
+    print(f"\n[3] 시간-주파수 해상도 트레이드오프 실험")
+
+    # n_fft 값 개수에 맞춰 서브플롯 생성
+    n_plots = len(n_fft_values)
+    fig, axes = plt.subplots(n_plots, 1, figsize=(12, 3 * n_plots))
+
+    # 각 n_fft 값에 대해 스펙트로그램 계산 및 시각화
+    for idx, n_fft in enumerate(n_fft_values):
+        # hop_length는 보통 n_fft의 1/4로 설정 (75% 오버랩)
+        hop_length = n_fft // 4
+
+        # STFT 계산
+        # librosa.stft 반환값: 복소수 배열 (frequency_bins x time_frames)
+        stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+
+        # 복소수 -> 파워 스펙트럼 (진폭의 제곱)
+        power_spec = np.abs(stft_result) ** 2
+        
+        # 데시벨 스케일 변환
+        # power_to_db: 10 * log10(max(S, amin) / ref)
+        power_db = librosa.power_to_db(power_spec, ref=np.max)
+
+        # 해상도 계산
+        freq_resolution = sr / n_fft # Hz
+        time_resolution = n_fft / sr * 1000 # ms
+
+        # 스펙트로그램 시각화
+        img = librosa.display.specshow(
+            power_db,
+            sr=sr,
+            hop_length=hop_length,
+            x_axis='time',
+            y_axis='hz',
+            ax=axes[idx],
+            cmap='magma'
+        )
+
+        axes[idx].set_title(
+            f'n_fft = {n_fft} | '
+            f'Freq res: {freq_resolution:.1f} Hz | '
+            f'Time res: {time_resolution:.1f} ms'
+        )
+        axes[idx].set_ylim(0, 4000) # 0~4kHz 범위로 제한
+
+        # 컬러바 추가
+        fig.colorbar(img, ax=axes[idx], format='%+2.0f dB')
+
+    plt.tight_layout()
+    plt.savefig('outputs/02_resolution_tradeoff.png', dpi=150)
+    plt.close()
+
+    print(f"    n_fft 값에 따른 해상도 변화:")
+    for n_fft in n_fft_values:
+        freq_res = sr / n_fft
+        time_res = n_fft / sr * 1000
+        print(f"    n_fft={n_fft}: 주파수 {freq_res:.1f}Hz, 시간 {time_res:.1f}ms")
+    print(f"    저장: outputs/02_resolution_tradeoff.png")
+
 
 def visualize_spectrogram(
     signal: np.ndarray,
@@ -211,13 +285,63 @@ def visualize_spectrogram(
     """
     스펙트로그램 시각화 (실습 4)
 
+    스펙토그램(Spectrogram)이란?
+    - STFT 결과를 2D 이미지로 시각화한 것
+    - 가로축: 시간 (초)
+    - 세로축: 주파수 (Hz)
+    - 색상: 에너지 크기 (dB) - 밝을수록 해당 시간/주파수에 에너지가 큼
+
+    STFT -> 스펙트로그램 변환 과정:
+    1. librosa.stft() -> 복소수 배열 (frequency_bins x time_frames)
+    2. np.abs() ** 2 -> 파워 스펙트럼 (진폭의 제곱)
+    3. librosa.power_to_db() -> 데시벨 스케일 변환
+
     Args:
         signal: 오디오 신호
         sr: 샘플링 레이트
         n_fft: FFT 크기
         hop_length: 홉 길이
     """
-    pass
+    print(f"\n[4] 스펙트로그램 시각화")
+
+    # STFT 계산
+    stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+
+    # 파워 스펙트럼 계산 (진폭의 제곱)
+    power_spec = np.abs(stft_result) ** 2
+
+    # 데시벨 변환
+    power_db = librosa.power_to_db(power_spec, ref=np.max)
+
+    # 시각화
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    img = librosa.display.specshow(
+        power_db,
+        sr=sr,
+        hop_length=hop_length,
+        x_axis='time',
+        y_axis='hz',
+        ax=ax,
+        cmap='magma'
+    )
+
+    ax.set_title(f'Spectrogram (n_fft={n_fft}, hop_length={hop_length})')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('Frequency (Hz)')
+
+    fig.colorbar(img, ax=ax, format='%+2.0f dB', label='Power (dB)')
+
+    plt.tight_layout()
+    plt.savefig('outputs/02_spectrogram.png', dpi=150)
+    plt.close()
+
+    # 스펙트로그램 shape 정보 출력
+    print(f"    STFT 결과 shape: {stft_result.shape}")
+    print(f"      - 주파수 빈 수: {stft_result.shape[0]} (0 ~ {sr//2}Hz)")
+    print(f"      - 시간 프레임 수: {stft_result.shape[1]}")
+    print(f"    저장: outputs/02_spectrogram.png")
+
 
 def main():
     """메인 실행 함수 - 각 실습을 순차 실행"""
@@ -230,7 +354,7 @@ def main():
     ensure_output_dir()
 
     print("=" * 50)
-    print("실습 2: STFT와 스팩트로그램")
+    print("실습 2: STFT와 스펙트로그램")
     print("=" * 50)
 
     # 실습 1: 윈도우 함수 비교
@@ -241,11 +365,11 @@ def main():
     demonstrate_spectral_leakage(sr, window_size, window_rect, window_hann)
 
     # 실습 3: 해상도 트레이드오프
-    signal = generate_synthetic_audio(sr, duration=2.0)
-    experiment_resolution_tradeoff(signal, sr, [512, 2048, 4096])
+    trumpet, _ = librosa.load(librosa.ex('trumpet'), sr=sr)
+    experiment_resolution_tradeoff(trumpet, sr, [512, 2048, 4096])
 
     # 실습 4: 스펙트로그램 시각화
-    visualize_spectrogram(signal, sr, n_fft, hop_length)
+    visualize_spectrogram(trumpet, sr, n_fft, hop_length)
 
     print("\n" + "=" * 50)
     print("실습 2 완료")
