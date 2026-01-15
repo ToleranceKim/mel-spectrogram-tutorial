@@ -191,4 +191,109 @@ def visualize_mel_filterbank(sr: int, n_fft: int, n_mels: int) -> None:
     print(f"    필터 개수: {n_mels}")
     print(f"    필터 뱅크 shape: {mel_filterbank.shape}")
     print(f"    저장: outputs/03_mel_filterbank.png")
+
+def compare_linear_mel(signal: np.ndarray,
+    sr: int,
+    n_fft: int,
+    hop_length: int,
+    n_mels: int
+    ) -> None:
+    """
+    선형 스펙트로그램 vs 멜 스펙트로그램 비교 (실습 4)
     
+    선형 스펙트로그램:
+    - 주파수 축이 Hz 단위로 균등 배치
+    - 0~11025Hz를 동일한 간격으로 표현
+    - 고주파 영역에 불필요하게 많은 공간 할당
+
+    멜 스펙트로그램:
+    - 주파수 축이 멜 스케일로 배치
+    - 저주파는 세밀하게, 고주파는 압축해서 표현
+    - 사람의 청각 특성 반영
+
+    시각적 차이:
+    - 선형: 저주파 영역이 좁고 고주파가 넓음
+    - 멜: 저주파 영역이 넓고 고주파가 압축됨
+
+    Args:
+        signal: 오디오 신호
+        sr: 샘플링 레이트 (Hz)
+        n_fft: FFT 크기
+        hop_length: 홉 길이
+        n_mels: 멜 필터 개수
+    """
+    print("\n[4] 선형 vs 멜 스펙트로그램 비교")
+
+    # 선형 스펙트로그램 (STFT -> 파워 -> dB)
+    stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+    power_spec = np.abs(stft_result) ** 2
+    linear_db = librosa.power_to_db(power_spec, ref=np.max)
+
+    # 멜 스펙트로그램
+    mel_spec = librosa.feature.melspectrogram(
+        y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels
+    )
+    mel_db = librosa.power_to_db(mel_spec, ref=np.max)
+
+    # 시각화 (2행 1열)
+    fig, axes = plt.subplots(2, 1, figsize=(12, 8))
+
+    # 상단: 선형 스펙트로그램
+    img1 = librosa.display.specshow(
+        linear_db, sr=sr, hop_length=hop_length,
+        x_axis='time', y_axis='hz', ax=axes[0], cmap='magma'
+    )
+    axes[0].set_title('Linear Spectrogram')
+    axes[0].set_ylim(0, 4000)
+    fig.colorbar(img1, ax=axes[0], format='%+2.0f dB')
+
+    # 하단: 멜 스펙트로그램
+    img2 = librosa.display.specshow(
+        mel_db, sr=sr, hop_length=hop_length,
+        x_axis='time', y_axis='mel', ax=axes[1], cmap='magma'
+    )
+    axes[1].set_title(f'Mel Spectrogram ({n_mels} mels)')
+    fig.colorbar(img2, ax=axes[1], format='%+2.0f dB')
+
+    plt.tight_layout()
+    plt.savefig('outputs/03_linear_vs_mel.png', dpi=150)
+    plt.close()
+
+    print(f"    선형 스펙트로그램 shape: {linear_db.shape}")
+    print(f"    멜 스펙트로그램 shape: {mel_db.shape}")
+    print(f"    저장: outputs/03_linear_vs_mel.png")
+
+def main():
+    """메인 실행 함수 - 각 실습을 순차 실행"""
+
+    config = load_config()
+    sr = config['audio']['sr']
+    n_fft = config['stft']['n_fft']
+    hop_length = config['stft']['hop_length']
+    n_mels = config['mel']['n_mels']
+
+    ensure_output_dir()
+
+    print("=" * 50)
+    print("실습 3: 멜 스케일")
+    print("=" * 50)
+
+    # 실습 1: 멜 스케일 곡선
+    visualize_mel_curve()
+
+    # 실습 2: HTK vs Slaney 비교
+    compare_htk_slaney(sr)
+
+    # 실습 3: 멜 필터 뱅크 
+    visualize_mel_filterbank(sr, n_fft, n_mels)
+
+    # 실습 4: 선형 vs 멜 스펙트로그램
+    trumpet, _ = librosa.load(librosa.ex('trumpet'), sr=sr)
+    compare_linear_mel(trumpet, sr, n_fft, hop_length, n_mels)
+
+    print("\n" + "=" * 50)
+    print("실습 3 완료")
+    print("=" * 50)
+
+if __name__ == "__main__":
+    main()
