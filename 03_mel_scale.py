@@ -135,7 +135,9 @@ def compare_htk_slaney(sr: int) -> None:
     print(f"    Slaney: librosa 기본값, 1000Hz 기준 선형/로그 혼합")
     print(f"    저장: outputs/03_htk_vs_slaney.png")
 
-def visualize_mel_filterbank(sr: int, n_fft: int, n_mels: int) -> None:
+def visualize_mel_filterbank(sr: int, n_fft: int, n_mels: int,
+                              fmin: float = 0, fmax: float = None,
+                              htk: bool = True, norm: str = "slaney") -> None:
     """
     멜 필터 뱅크 시각화 (실습 3)
 
@@ -162,7 +164,10 @@ def visualize_mel_filterbank(sr: int, n_fft: int, n_mels: int) -> None:
     print("\n[3] 멜 필터 뱅크 시각화")
 
     # 멜 필터 뱅크 생성
-    mel_filterbank = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels)
+    mel_filterbank = librosa.filters.mel(
+        sr=sr, n_fft=n_fft, n_mels=n_mels,
+        fmin=fmin, fmax=fmax, htk=htk, norm=norm
+    )
 
     # 주파수 축 생성
     freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
@@ -196,7 +201,12 @@ def compare_linear_mel(signal: np.ndarray,
     sr: int,
     n_fft: int,
     hop_length: int,
-    n_mels: int
+    n_mels: int,
+    window: str = "hann",
+    fmin: float = 0,
+    fmax: float = None,
+    htk: bool = True,
+    norm: str = "slaney"
     ) -> None:
     """
     선형 스펙트로그램 vs 멜 스펙트로그램 비교 (실습 4)
@@ -225,13 +235,14 @@ def compare_linear_mel(signal: np.ndarray,
     print("\n[4] 선형 vs 멜 스펙트로그램 비교")
 
     # 선형 스펙트로그램 (STFT -> 파워 -> dB)
-    stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+    stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length, window=window)
     power_spec = np.abs(stft_result) ** 2
     linear_db = librosa.power_to_db(power_spec, ref=np.max)
 
     # 멜 스펙트로그램
     mel_spec = librosa.feature.melspectrogram(
-        y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels
+        y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length, window=window,
+        n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk, norm=norm
     )
     mel_db = librosa.power_to_db(mel_spec, ref=np.max)
 
@@ -270,7 +281,12 @@ def main():
     sr = config['audio']['sr']
     n_fft = config['stft']['n_fft']
     hop_length = config['stft']['hop_length']
+    window = config['stft']['window']
     n_mels = config['mel']['n_mels']
+    fmin = config['mel']['fmin']
+    fmax = config['mel']['fmax']
+    htk = config['mel']['htk']
+    norm = config['mel']['norm']
 
     ensure_output_dir()
 
@@ -284,12 +300,12 @@ def main():
     # 실습 2: HTK vs Slaney 비교
     compare_htk_slaney(sr)
 
-    # 실습 3: 멜 필터 뱅크 
-    visualize_mel_filterbank(sr, n_fft, n_mels)
+    # 실습 3: 멜 필터 뱅크
+    visualize_mel_filterbank(sr, n_fft, n_mels, fmin, fmax, htk, norm)
 
     # 실습 4: 선형 vs 멜 스펙트로그램
     trumpet, _ = librosa.load(librosa.ex('trumpet'), sr=sr)
-    compare_linear_mel(trumpet, sr, n_fft, hop_length, n_mels)
+    compare_linear_mel(trumpet, sr, n_fft, hop_length, n_mels, window, fmin, fmax, htk, norm)
 
     print("\n" + "=" * 50)
     print("실습 3 완료")

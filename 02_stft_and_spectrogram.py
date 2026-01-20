@@ -280,7 +280,8 @@ def visualize_spectrogram(
     signal: np.ndarray,
     sr: int,
     n_fft: int,
-    hop_length: int
+    hop_length: int,
+    window: str = "hann"
 ) -> None:
     """
     스펙트로그램 시각화 (실습 4)
@@ -305,7 +306,7 @@ def visualize_spectrogram(
     print(f"\n[4] 스펙트로그램 시각화")
 
     # STFT 계산
-    stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+    stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length, window=window)
 
     # 파워 스펙트럼 계산 (진폭의 제곱)
     power_spec = np.abs(stft_result) ** 2
@@ -350,6 +351,7 @@ def main():
     sr = config['audio']['sr']
     n_fft = config['stft']['n_fft']
     hop_length = config['stft']['hop_length']
+    window = config['stft']['window']
 
     ensure_output_dir()
 
@@ -369,7 +371,7 @@ def main():
     experiment_resolution_tradeoff(trumpet, sr, [512, 2048, 4096])
 
     # 실습 4: 스펙트로그램 시각화
-    visualize_spectrogram(trumpet, sr, n_fft, hop_length)
+    visualize_spectrogram(trumpet, sr, n_fft, hop_length, window)
 
     print("\n" + "=" * 50)
     print("실습 2 완료")

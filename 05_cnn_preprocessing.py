@@ -310,7 +310,18 @@ def main():
    sr = config['audio']['sr']
    n_fft = config['stft']['n_fft']
    hop_length = config['stft']['hop_length']
+   win_length = config['stft']['win_length']
+   window = config['stft']['window']
+   center = config['stft']['center']
+   pad_mode = config['stft']['pad_mode']
    n_mels = config['mel']['n_mels']
+   fmin = config['mel']['fmin']
+   fmax = config['mel']['fmax']
+   htk = config['mel']['htk']
+   norm = config['mel']['norm']
+   amin = config['db']['amin']
+   top_db = config['db']['top_db']
+   power = config['db']['power']
 
    ensure_output_dir()
 
@@ -321,9 +332,11 @@ def main():
    # 트럼펫 샘플 로드 및 멜 스펙트로그램 생성
    trumpet, _ = librosa.load(librosa.ex('trumpet'), sr=sr)
    mel_spec = librosa.feature.melspectrogram(
-      y=trumpet, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels
+      y=trumpet, sr=sr, n_fft=n_fft, hop_length=hop_length,
+      win_length=win_length, window=window, center=center, pad_mode=pad_mode,
+      power=power, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk, norm=norm
    )
-   mel_db = librosa.power_to_db(mel_spec, ref=np.max)
+   mel_db = librosa.power_to_db(mel_spec, ref=np.max, amin=amin, top_db=top_db)
 
    # 실습 1: 크기 고정
    visualize_size_fixing(mel_db, sr, hop_length)

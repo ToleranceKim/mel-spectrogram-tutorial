@@ -39,7 +39,15 @@ def visualize_pipeline_steps(signal: np.ndarray,
    sr: int,
    n_fft: int,
    hop_length: int,
-   n_mels: int
+   n_mels: int,
+   win_length: int = None,
+   window: str = "hann",
+   center: bool = True,
+   pad_mode: str = "constant",
+   fmin: float = 0,
+   fmax: float = None,
+   htk: bool = True,
+   norm: str = "slaney"
    ) -> None:
    f"""
    멜 스펙트로그램 파이프라인 단계별 시각화 (실습 1)
@@ -71,7 +79,9 @@ def visualize_pipeline_steps(signal: np.ndarray,
    print(f"    Step 1 - 파형: shape = {signal.shape}")
 
    # Step 2: STFT
-   stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+   stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length,
+                              win_length=win_length, window=window,
+                              center=center, pad_mode=pad_mode)
    print(f"    Step 2 - STFT: shape = {stft_result.shape}")
 
    # Step 3: 파워 스펙트로그램
@@ -79,7 +89,8 @@ def visualize_pipeline_steps(signal: np.ndarray,
    print(f"    Step 3 - 파워: shape = {power_spec.shape}")
 
    # Step 4: 멜 필터 적용 (행렬 곱)
-   mel_filterbank = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels)
+   mel_filterbank = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels,
+                                        fmin=fmin, fmax=fmax, htk=htk, norm=norm)
    mel_spec = mel_filterbank @ power_spec
    print(f"    Step 4 - 멜: shape = {mel_spec.shape}")
 
@@ -143,7 +154,18 @@ def visualize_db_conversion(signal: np.ndarray,
    sr: int,
    n_fft: int,
    hop_length: int,
-   n_mels: int
+   n_mels: int,
+   win_length: int = None,
+   window: str = "hann",
+   center: bool = True,
+   pad_mode: str = "constant",
+   fmin: float = 0,
+   fmax: float = None,
+   htk: bool = True,
+   norm: str = "slaney",
+   power: float = 2.0,
+   amin: float = 1e-10,
+   top_db: float = 80.0
    ) -> None:
    """
    dB 변환 효과 시각화 (실습 2)
@@ -174,11 +196,13 @@ def visualize_db_conversion(signal: np.ndarray,
 
    # 멜 스펙트로그램 생성
    mel_spec = librosa.feature.melspectrogram(
-      y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels
+      y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length,
+      win_length=win_length, window=window, center=center, pad_mode=pad_mode,
+      power=power, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk, norm=norm
    )
 
    # dB 변환
-   mel_db = librosa.power_to_db(mel_spec, ref=np.max)
+   mel_db = librosa.power_to_db(mel_spec, ref=np.max, amin=amin, top_db=top_db)
 
    # 시각화 (2행 1열)
    fig, axes = plt.subplots(2, 1, figsize=(12, 8))
@@ -211,7 +235,18 @@ def visualize_final_melspec(signal: np.ndarray,
    sr: int,
    n_fft: int,
    hop_length: int,
-   n_mels: int
+   n_mels: int,
+   win_length: int = None,
+   window: str = "hann",
+   center: bool = True,
+   pad_mode: str = "constant",
+   fmin: float = 0,
+   fmax: float = None,
+   htk: bool = True,
+   norm: str = "slaney",
+   power: float = 2.0,
+   amin: float = 1e-10,
+   top_db: float = 80.0
    ) -> None:
    """
    최종 멜 스펙트로그램 및 행렬 연산 설명 (실습 3)
@@ -237,13 +272,18 @@ def visualize_final_melspec(signal: np.ndarray,
 
    # 방법 1: librosa 함수 사용
    mel_spec_librosa = librosa.feature.melspectrogram(
-      y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels
+      y=signal, sr=sr, n_fft=n_fft, hop_length=hop_length,
+      win_length=win_length, window=window, center=center, pad_mode=pad_mode,
+      power=power, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk, norm=norm
    )
 
    # 방법 2: 직접 행렬 연산
-   stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length)
+   stft_result = librosa.stft(signal, n_fft=n_fft, hop_length=hop_length,
+                              win_length=win_length, window=window,
+                              center=center, pad_mode=pad_mode)
    power_spec = np.abs(stft_result) ** 2
-   mel_filterbank = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels)
+   mel_filterbank = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels,
+                                        fmin=fmin, fmax=fmax, htk=htk, norm=norm)
    mel_spec_manual = mel_filterbank @ power_spec
 
    # 두 방법 결과 비교
@@ -280,7 +320,19 @@ def main():
    sr = config['audio']['sr']
    n_fft = config['stft']['n_fft']
    hop_length = config['stft']['hop_length']
+   win_length = config['stft']['win_length']
+   window = config['stft']['window']
+   center = config['stft']['center']
+   pad_mode = config['stft']['pad_mode']
    n_mels = config['mel']['n_mels']
+   fmin = config['mel']['fmin']
+   fmax = config['mel']['fmax']
+   htk = config['mel']['htk']
+   norm = config['mel']['norm']
+   db_ref = config['db']['ref']
+   amin = config['db']['amin']
+   top_db = config['db']['top_db']
+   power = config['db']['power']
 
    ensure_output_dir()
 
@@ -292,13 +344,19 @@ def main():
    trumpet, _ = librosa.load(librosa.ex('trumpet'), sr=sr)
 
    # 실습 1: 파이프라인 단계별 시각화
-   visualize_pipeline_steps(trumpet, sr, n_fft, hop_length, n_mels)
+   visualize_pipeline_steps(trumpet, sr, n_fft, hop_length, n_mels,
+                            win_length, window, center, pad_mode,
+                            fmin, fmax, htk, norm)
 
    # 실습 2: dB 변환 효과
-   visualize_db_conversion(trumpet, sr, n_fft, hop_length, n_mels)
+   visualize_db_conversion(trumpet, sr, n_fft, hop_length, n_mels,
+                           win_length, window, center, pad_mode,
+                           fmin, fmax, htk, norm, power, amin, top_db)
 
    # 실습 3: 최종 멜 스펙트로그램
-   visualize_final_melspec(trumpet, sr, n_fft, hop_length, n_mels)
+   visualize_final_melspec(trumpet, sr, n_fft, hop_length, n_mels,
+                           win_length, window, center, pad_mode,
+                           fmin, fmax, htk, norm, power, amin, top_db)
 
    print("\n" + "=" * 50)
    print("실습 4 완료")
